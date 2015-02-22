@@ -6,10 +6,6 @@ before do
   content_type :json
 end
 
-# - Entity Type, e.g. 'Product', 'Article'
-# - Entity Identifier, e.g. '1234', '582b5530-6cdb-11e4-9803-0800200c9a66'
-# - Tags, e.g. ['Large', 'Pink', 'Bike']
-
 post '/tag' do
   require_params!(:type, :id, :tags)
   key = "#{params[:type]}:#{params[:id]}:tags"
@@ -58,13 +54,23 @@ delete "/tags/:type/:id" do
   end
 end
 
-# Retrives statistics about all tags
-# e.g. [{tag: 'Bike', count: 5}, {tag: 'Pink', count: 3}]
-
 get "/stats" do
   stats = @redis.hgetall("tags:stats")
   status 200
   stats.to_json
+end
+
+get "/stats/:tag" do
+  require_params!(:tag)
+  stats = @redis.hget("tags:stats", params[:tag])
+
+  if stats.nil? || stats.empty?
+    status 404
+    stats.to_json
+  else
+    status 200
+    stats.to_json
+  end
 end
 
 # HELPERS
