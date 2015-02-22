@@ -20,8 +20,16 @@ post '/tag' do
   end
 
   status 200
-  content_type :json
   { params[:id] => params[:tags] }.to_json
+end
+
+# GET /tags/:entity_type/:entity_id
+
+get "/tags/:type/:id" do
+  require_params!(:type, :id)
+  key = "#{params[:type]}:#{params[:id]}:tags"
+  result = @redis.smembers(key)
+  { params[:id] => result }.to_json
 end
 
 # HELPERS
