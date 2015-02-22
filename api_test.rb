@@ -63,5 +63,16 @@ class ApiTest < MiniTest::Unit::TestCase
     assert_equal expected_stats, JSON.parse(last_response.body)
   end
 
+  def test_get_stats_for_one_tag
+    post "/tag", {type: "Product", id: "1000", tags: %w(BMX Pink)}
+    post "/tag", {type: "Product", id: "1001", tags: %w(BMX Black)}
+
+    get "/stats/BMX"
+    assert_equal "2", last_response.body
+
+    get "/stats/Pink"
+    assert_equal "1", last_response.body
+  end
+
 end
 

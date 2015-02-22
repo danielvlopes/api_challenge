@@ -66,10 +66,10 @@ get "/stats/:tag" do
 
   if stats.nil? || stats.empty?
     status 404
-    stats.to_json
+    stats
   else
     status 200
-    stats.to_json
+    stats
   end
 end
 
