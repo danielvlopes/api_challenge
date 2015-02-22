@@ -17,13 +17,13 @@ post '/tag' do
   @redis.multi do
     @redis.del(key)
     @redis.sadd(key, params[:tags])
+    increment_stats(params[:tags])
   end
 
   status 200
   { params[:id] => params[:tags] }.to_json
 end
 
-# GET /tags/:entity_type/:entity_id
 get "/tags/:type/:id" do
   require_params!(:type, :id)
   key = "#{params[:type]}:#{params[:id]}:tags"
@@ -38,14 +38,18 @@ get "/tags/:type/:id" do
   end
 end
 
-# DELETE /tags/:entity_type/:entity_id
-
 delete "/tags/:type/:id" do
   require_params!(:type, :id)
   key = "#{params[:type]}:#{params[:id]}:tags"
-  result = @redis.del(key)
+  tags = @redis.smembers(key)
+  result = []
 
-  if result > 0
+  result = @redis.multi do
+    @redis.del(key)
+    increment_stats(tags, -1)
+  end
+
+  if !result.last.nil? && result.last > 0
     status 200
     result.to_json
   else
@@ -54,13 +58,22 @@ delete "/tags/:type/:id" do
   end
 end
 
+# Retrives statistics about all tags
+# e.g. [{tag: 'Bike', count: 5}, {tag: 'Pink', count: 3}]
+
+get "/stats" do
+  stats = @redis.hgetall("tags:stats")
+  status 200
+  stats.to_json
+end
+
 # HELPERS
 
-# def add_counter(tags)
-#   HSET myhash field 5
-#   tags.each do |tag|
-#   end
-# end
+def increment_stats(tags, value=1)
+  tags.each do |tag|
+    @redis.hincrby("tags:stats", tag, value)
+  end
+end
 
 def require_params!(*keys)
   keys.each do |key|
