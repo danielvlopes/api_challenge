@@ -24,12 +24,34 @@ post '/tag' do
 end
 
 # GET /tags/:entity_type/:entity_id
-
 get "/tags/:type/:id" do
   require_params!(:type, :id)
   key = "#{params[:type]}:#{params[:id]}:tags"
   result = @redis.smembers(key)
-  { params[:id] => result }.to_json
+
+  if result.empty?
+    status 404
+    { params[:id] => [] }.to_json
+  else
+    status 200
+    { params[:id] => result }.to_json
+  end
+end
+
+# DELETE /tags/:entity_type/:entity_id
+
+delete "/tags/:type/:id" do
+  require_params!(:type, :id)
+  key = "#{params[:type]}:#{params[:id]}:tags"
+  result = @redis.del(key)
+
+  if result > 0
+    status 200
+    result.to_json
+  else
+    status 404
+    { params[:id] => "" }.to_json
+  end
 end
 
 # HELPERS
