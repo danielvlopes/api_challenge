@@ -38,16 +38,16 @@ delete "/tags/:type/:id" do
   require_params!(:type, :id)
   key = "#{params[:type]}:#{params[:id]}:tags"
   tags = @redis.smembers(key)
-  result = []
+  result = [0]
 
   result = @redis.multi do
     @redis.del(key)
     increment_stats(tags, -1)
   end
 
-  if !result.last.nil? && result.last > 0
+  if result.first > 0
     status 200
-    result.to_json
+    result.first.to_json
   else
     status 404
     { params[:id] => "" }.to_json
