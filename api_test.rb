@@ -51,5 +51,17 @@ class ApiTest < MiniTest::Unit::TestCase
     assert_equal 404, last_response.status
   end
 
+  def test_get_stats
+    post "/tag", {type: "Product", id: "1000", tags: %w(BMX Pink)}
+    post "/tag", {type: "Product", id: "1001", tags: %w(BMX Black)}
+    get "/stats"
+    expected_stats = {"BMX"=>"2", "Pink"=>"1", "Black"=>"1"}
+    assert_equal expected_stats, JSON.parse(last_response.body)
+    delete "/tags/Product/1000"
+    get "/stats"
+    expected_stats = {"BMX"=>"1", "Pink"=>"0", "Black"=>"1"}
+    assert_equal expected_stats, JSON.parse(last_response.body)
+  end
+
 end
 
